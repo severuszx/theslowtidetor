@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<title>auth-relay</title>
+</head>
+<body>
+<!-- 跨站登录态中继:读本站(主站)localStorage 的 tst_token,响应新站 postMessage 请求;也接收新站登录后的同步写回 -->
+<script>
+(function(){
+  function read(){return {token:localStorage.getItem('tst_token')||'',
+    email:localStorage.getItem('tst_email')||'',uid:localStorage.getItem('tst_uid')||''};}
+  window.addEventListener('message',function(e){
+    var d=e.data;
+    if(!d) return;
+    if(d.type==='tst-auth-request'){
+      var s=read();
+      try{e.source.postMessage({type:'tst-auth-response',token:s.token,email:s.email,uid:s.uid},'*');}catch(err){}
+    }else if(d.type==='tst-auth-sync'){
+      if(d.token){localStorage.setItem('tst_token',d.token);}else{localStorage.removeItem('tst_token');}
+      if(d.email){localStorage.setItem('tst_email',d.email);}else{localStorage.removeItem('tst_email');}
+      if(d.uid){localStorage.setItem('tst_uid',d.uid);}else{localStorage.removeItem('tst_uid');}
+      var s2=read();
+      try{e.source.postMessage({type:'tst-auth-response',token:s2.token,email:s2.email,uid:s2.uid},'*');}catch(err){}
+    }
+  });
+})();
+</script>
+</body>
+</html>
